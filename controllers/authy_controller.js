@@ -1,4 +1,3 @@
-import connection from '../config/dbConn.js';
 import Security from '../utils/cryptograf.js';
 import User from '../utils/user.js';
 
@@ -15,21 +14,21 @@ export default {
             return res.status(400).json({sucess: false, message: "Not authorized"});
         } 
 
-        const loginEncrypted = sec.encrypt(login);
+        const user = await User.getUserByEmail(login);
 
-        const user = await User.verifyUser(loginEncrypted);
-
-        if (!user[0]) {
+        if (!user) {
             return res.status(400).json({sucess: false, message: "Unauthorized"});
         }
 
-        const authorized = sec.verifyPassword(password, `${user[0].salt}:${user[0].password}`)
+        const authorized = sec.verifyPassword(password, `${user.salt}:${user.passwordHashed}`)
 
-        if (authorized) {
-            return res.status(200).json({sucess: true});
+        if (!authorized) {
+            return res.status(500).json({sucess: false});
         }
 
-        return res.status(500).json({sucess: false});
+        const token = await user.getRegenerateToken();
+        
+        return res.status(200).json({sucess: true, token});
 
     },
 
@@ -43,23 +42,23 @@ export default {
             return res.status(400).json({sucess: false, message: "Unauthorized"});
         } 
 
-        const loginEncrypted = sec.encrypt(login);
+        let user = await User.getUserByEmail(login);
 
-        const user = await User.verifyUser(loginEncrypted);
-
-        if (user && user[0]) {
+        if (user) {
             return res.status(403).json({sucess: false, message: "Unauthorized"});
         }
 
         const [salt, hash] = sec.hashPassword(password).split(":");
 
-        const sucessfuly = await User.addUser(loginEncrypted, hash, salt);
+        user = await User.addUser(login, hash, salt);
 
-        if (!sucessfuly) {
+        if (!user) {
             return res.status(500).json({sucess: false, message: "Internal Error"});
         } 
+
+        const token = await user.getRegenerateToken();
         
-        return res.status(200).json({sucess: true, sucessfuly});
+        return res.status(200).json({sucess: true, token});
 
     }
 }
