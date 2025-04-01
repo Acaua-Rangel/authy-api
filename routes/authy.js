@@ -5,6 +5,7 @@ var router = express.Router();
 const authy_controller = require('../controllers/authy_controller.js');
 
 router
-    .get('/status', authy_controller.status)
+    .post('/login', authy_controller.login)
+    .post('/register', authy_controller.register)
 
 module.exports = router;
