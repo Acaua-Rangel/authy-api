@@ -54,7 +54,6 @@ async function verifyUser(key) {
         connection.query("select * from users where login=? LIMIT 1", [key], async(err, rows, fields) => {
             if (err instanceof Error) {
                 if (err.code=='ER_DUP_ENTRY') {
-                    console.log(err);
                     reject(err);
                     return;
 
@@ -69,7 +68,6 @@ async function verifyUser(key) {
 
 function addUser(login, hash, salt) {
     connection.query("INSERT INTO users (login, password, salt) VALUES (?, ?, ?)", [login, hash, salt], (err, results) => {
-        console.log(results);
         if (err) {
             console.log(err);
             return true;
@@ -92,9 +90,22 @@ module.exports = {
 
         const loginEncrypted = encrypt(login);
 
-        console.log(loginEncrypted);
+        const user = await verifyUser(loginEncrypted);
 
-        return res.status(200).json({sucess: true, login, password});
+        console.log(user);
+
+        if (!user[0]) {
+            return res.status(400).json({sucess: false, message: "Unauthorized"});
+        }
+
+        const authorized = verifyPassword(password, `${user[0].salt}:${user[0].password}`)
+
+        if (authorized) {
+            return res.status(200).json({sucess: true});
+        }
+
+        return res.status(500).json({sucess: false});
+
     },
 
     register: async(req, res) => {
