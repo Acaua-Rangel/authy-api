@@ -1,11 +1,10 @@
-const express = require('express');
-require('dotenv').config({path:'../.env'});
+import express from 'express';
+import dotenv from 'dotenv';
+dotenv.config({path:'../.env'});
 var router = express.Router();
 
-const authy_controller = require('../controllers/authy_controller.js');
+import authy_controller from '../controllers/authy_controller.js';
 
-router
+export default router
     .post('/login', authy_controller.login)
     .post('/register', authy_controller.register)
-
-module.exports = router;

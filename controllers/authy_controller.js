@@ -1,53 +1,8 @@
-const fs = require('fs');
-const connection = require('../config/dbConn.js');
-const crypto = require('crypto');
-const aesjs = require('aes-js');
+import connection from '../config/dbConn.js';
 
-// Converte as chaves do formato HEX para bytes
-const secretKey = aesjs.utils.hex.toBytes(process.env.SECRET_KEY);
-const iv = aesjs.utils.hex.toBytes(process.env.IV);
+import Security from '../utils/cryptograf.js';
 
-class User {
-    constructor(login, password) {
-        this.login = login;
-        this.password = password;
-    }
-}
-
-// Função para criptografar
-function encrypt(text) {
-    const textBytes = aesjs.utils.utf8.toBytes(text);
-    const paddedBytes = aesjs.padding.pkcs7.pad(textBytes);
-
-    const aesCbc = new aesjs.ModeOfOperation.cbc(secretKey, iv);
-    const encryptedBytes = aesCbc.encrypt(paddedBytes);
-
-    return aesjs.utils.hex.fromBytes(encryptedBytes);
-}
-
-// Função para descriptografar
-function decrypt(encryptedHex) {
-    const encryptedBytes = aesjs.utils.hex.toBytes(encryptedHex);
-
-    const aesCbc = new aesjs.ModeOfOperation.cbc(secretKey, iv);
-    const decryptedBytes = aesCbc.decrypt(encryptedBytes);
-
-    return aesjs.utils.utf8.fromBytes(aesjs.padding.pkcs7.strip(decryptedBytes));
-}
-
-function hashPassword(password) {
-    const salt = crypto.randomBytes(16).toString("hex"); // 16 bytes (32 caracteres hex)
-    const hash = crypto.createHmac("sha256", salt).update(password).digest("hex");
-
-    return `${salt}:${hash}`; // Retorna no formato SALT:HASH
-}
-
-function verifyPassword(password, storedHash) {
-    const [salt, originalHash] = storedHash.split(":");
-    const hash = crypto.createHmac("sha256", salt).update(password).digest("hex");
-
-    return hash === originalHash;
-}
+const sec = new Security();
 
 async function verifyUser(key) {
     return new Promise(async(resolve, reject) => {
@@ -77,7 +32,7 @@ function addUser(login, hash, salt) {
     });
 }
 
-module.exports = {
+export default {
     login: async(req, res) => {
         const {login, password} = req.headers
         if (typeof login !== "string" || typeof password !== "string") {
@@ -88,7 +43,7 @@ module.exports = {
             return res.status(400).json({sucess: false, message: "Not authorized"});
         } 
 
-        const loginEncrypted = encrypt(login);
+        const loginEncrypted = sec.encrypt(login);
 
         const user = await verifyUser(loginEncrypted);
 
@@ -98,7 +53,7 @@ module.exports = {
             return res.status(400).json({sucess: false, message: "Unauthorized"});
         }
 
-        const authorized = verifyPassword(password, `${user[0].salt}:${user[0].password}`)
+        const authorized = sec.verifyPassword(password, `${user[0].salt}:${user[0].password}`)
 
         if (authorized) {
             return res.status(200).json({sucess: true});
@@ -118,7 +73,7 @@ module.exports = {
             return res.status(400).json({sucess: false, message: "Unauthorized"});
         } 
 
-        const loginEncrypted = encrypt(login);
+        const loginEncrypted = sec.encrypt(login);
 
         const user = await verifyUser(loginEncrypted);
 
@@ -126,7 +81,7 @@ module.exports = {
             return res.status(403).json({sucess: false, message: "Unauthorized"});
         }
 
-        const [salt, hash] = hashPassword(password).split(":");
+        const [salt, hash] = sec.hashPassword(password).split(":");
 
         const sucessfuly = addUser(loginEncrypted, hash, salt);
 
