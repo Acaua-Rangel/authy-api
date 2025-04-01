@@ -1,36 +1,8 @@
 import connection from '../config/dbConn.js';
-
 import Security from '../utils/cryptograf.js';
+import User from '../utils/user.js';
 
 const sec = new Security();
-
-async function verifyUser(key) {
-    return new Promise(async(resolve, reject) => {
-        connection.query("select * from users where login=? LIMIT 1", [key], async(err, rows, fields) => {
-            if (err instanceof Error) {
-                if (err.code=='ER_DUP_ENTRY') {
-                    reject(err);
-                    return;
-
-                } 
-
-            }
-            resolve(rows);
-            return;
-        })
-    })
-}
-
-function addUser(login, hash, salt) {
-    connection.query("INSERT INTO users (login, password, salt) VALUES (?, ?, ?)", [login, hash, salt], (err, results) => {
-        if (err) {
-            console.log(err);
-            return true;
-        } else {
-            return false;
-        }
-    });
-}
 
 export default {
     login: async(req, res) => {
@@ -45,9 +17,7 @@ export default {
 
         const loginEncrypted = sec.encrypt(login);
 
-        const user = await verifyUser(loginEncrypted);
-
-        console.log(user);
+        const user = await User.verifyUser(loginEncrypted);
 
         if (!user[0]) {
             return res.status(400).json({sucess: false, message: "Unauthorized"});
@@ -75,7 +45,7 @@ export default {
 
         const loginEncrypted = sec.encrypt(login);
 
-        const user = await verifyUser(loginEncrypted);
+        const user = await User.verifyUser(loginEncrypted);
 
         if (user && user[0]) {
             return res.status(403).json({sucess: false, message: "Unauthorized"});
@@ -83,14 +53,13 @@ export default {
 
         const [salt, hash] = sec.hashPassword(password).split(":");
 
-        const sucessfuly = addUser(loginEncrypted, hash, salt);
+        const sucessfuly = await User.addUser(loginEncrypted, hash, salt);
 
         if (!sucessfuly) {
-            return res.status(200).json({sucess: true, loginEncrypted, hash, salt});
-
+            return res.status(500).json({sucess: false, message: "Internal Error"});
         } 
-
-        return res.status(500).json({sucess: true, message: "Internal Error"});
+        
+        return res.status(200).json({sucess: true, sucessfuly});
 
     }
 }

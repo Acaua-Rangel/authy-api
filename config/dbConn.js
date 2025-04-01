@@ -13,7 +13,7 @@ const connection = mysql.createPool({
     queueLimit: 0
 });
 
-export default connection.getConnection((err, connection) => {
+connection.getConnection((err, connection) => {
     if (err) {
         console.error("Erro ao conectar ao MySQL:", err);
         throw err;
@@ -21,3 +21,5 @@ export default connection.getConnection((err, connection) => {
     console.log(`Connected to DataBase: ${process.env.MYSQL_DATABASE}`);
     connection.release(); // Libera a conexão para ser reutilizada no pool
 });
+
+export default connection;
