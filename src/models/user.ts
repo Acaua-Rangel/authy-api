@@ -1,37 +1,35 @@
 import Security from "./cryptograf.js";
 import connection from '../config/dbConn.js';
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 
 const sec = new Security();
 
 export default class User {
-    id;
-    email;
-    passwordHashed;
-    salt;
+    id: number;
+    email: string;
+    passwordHashed: string;
+    salt: string;
 
-    constructor(id, email, passwordHashed, salt) {
+    constructor(id: number, email: string, passwordHashed: string, salt: string) {
         this.id = id;
         this.email = email;
         this.passwordHashed = passwordHashed;
         this.salt = salt;
     }
 
-    static async init(id) {
+    static async init(id: number) {
         const response = await User.getDataById(id);
         return new User(response[0].id, sec.decrypt(response[0].login), response[0].password, response[0].salt)
     }
 
-    static async getDataById(id) {
+    static async getDataById(id: number): Promise<any> {
         return new Promise(async(resolve, reject) => {
-            connection.query("select * from users where id=? LIMIT 1", [id], async(err, rows, fields) => {
-                if (err instanceof Error) {
-                    if (err.code=='ER_DUP_ENTRY') {
-                        reject(err);
-                        return;
-    
-                    } 
-    
+            connection.query("select * from users where id=? LIMIT 1", [id], async(err: any, rows: any, fields: any) => {
+                if (err) {
+                    if ("code" in err && err.code === "ER_DUP_ENTRY") {
+                      return reject(err);
+                    }
+                    return reject(err); // Rejeita qualquer outro erro também
                 }
                 resolve(rows);
                 return;
@@ -39,16 +37,14 @@ export default class User {
         })
     }
 
-    static async getDataByEmail(key) {
+    static async getDataByEmail(key: string): Promise<any> {
         return new Promise(async(resolve, reject) => {
             connection.query("select * from users where login=? LIMIT 1", [key], async(err, rows, fields) => {
-                if (err instanceof Error) {
-                    if (err.code=='ER_DUP_ENTRY') {
-                        reject(err);
-                        return;
-    
-                    } 
-    
+                if (err) {
+                    if ("code" in err && err.code === "ER_DUP_ENTRY") {
+                      return reject(err);
+                    }
+                    return reject(err); // Rejeita qualquer outro erro também
                 }
                 resolve(rows);
                 return;
@@ -56,7 +52,7 @@ export default class User {
         })
     }
 
-    static async getUserByEmail(key) {
+    static async getUserByEmail(key: string) {
         const response = await User.getDataByEmail(sec.encrypt(key));
         if (response[0]) {
             return new User(response[0].id, sec.decrypt(response[0].login), response[0].password, response[0].salt);
@@ -64,12 +60,12 @@ export default class User {
         return false;
     }
 
-    static async addUser(login, hash, salt) {
+    static async addUser(login: string, hash: string, salt: string) {
         return new Promise((resolve, reject) => {
             connection.query(
                 "INSERT INTO users (login, password, salt) VALUES (?, ?, ?)", 
                 [sec.encrypt(login), hash, salt], 
-                (err, results) => {
+                (err: any, results: any) => {
                     if (err) {
                         console.error("Erro ao inserir usuário:", err);
                         reject(err);
@@ -88,7 +84,7 @@ export default class User {
             connection.query(
                 "INSERT INTO devices (userId, token) VALUES (?, ?)", 
                 [this.id, token], 
-                (err, results) => {
+                (err: any, results: any) => {
                     if (err) {
                         reject(err);
                     } else {
@@ -100,5 +96,3 @@ export default class User {
     }
     
 }
-
-//console.log(await User.getUserByEmail("acauarangel17@gmail.com"));

@@ -1,10 +1,10 @@
-import Security from '../utils/cryptograf.js';
-import User from '../utils/user.js';
+import Security from '../models/cryptograf.js';
+import User from '../models/user.js';
 
 const sec = new Security();
 
 export default {
-    login: async(req, res) => {
+    login: async(req: any, res: any) => {
         const {login, password} = req.headers
         if (typeof login !== "string" || typeof password !== "string") {
             return res.status(400).json({sucess: false, message: "Not authorized"});
@@ -32,7 +32,7 @@ export default {
 
     },
 
-    register: async(req, res) => {
+    register: async(req: any, res: any) => {
         const {login, password} = req.headers
         if (typeof login !== "string" || typeof password !== "string") {
             return res.status(400).json({sucess: false, message: "Unauthorized"});
@@ -42,7 +42,7 @@ export default {
             return res.status(400).json({sucess: false, message: "Unauthorized"});
         } 
 
-        let user = await User.getUserByEmail(login);
+        let user: any = await User.getUserByEmail(login);
 
         if (user) {
             return res.status(403).json({sucess: false, message: "Unauthorized"});

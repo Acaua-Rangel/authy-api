@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "outDir": "./dist",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "target": "ES6",
+    "noEmitOnError": true,
+    "esModuleInterop": true,
+    "allowImportingTsExtensions": false
+  },
+  "include": ["src/**/*"]
+}

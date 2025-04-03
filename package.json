@@ -4,9 +4,11 @@
   "description": "O objetivo desse projeto é que devs que queiram criar aplicações, que necessitem de um sistema de autenticação, possam se basear nesse repositório",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node dist/index.js",
+    "dev": "concurrently \"npm run watch\" \"nodemon dist/index.js\"",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "compile": "tsc",
+    "watch": "tsc -w"
   },
   "keywords": [],
   "author": "",
@@ -20,6 +22,13 @@
     "mysql2": "^3.13.0"
   },
   "devDependencies": {
+    "@types/aes-js": "^3.1.4",
+    "@types/compression": "^1.7.5",
+    "@types/cors": "^2.8.17",
+    "@types/dotenv": "^8.2.3",
+    "@types/express": "^5.0.1",
+    "@types/node": "^22.14.0",
+    "concurrently": "^9.1.2",
     "nodemon": "^3.1.9",
     "typescript": "^5.8.2"
   },
