@@ -6,7 +6,8 @@
     "target": "ES6",
     "noEmitOnError": true,
     "esModuleInterop": true,
-    "allowImportingTsExtensions": false
+    "allowImportingTsExtensions": false,
+    "noImplicitAny": true
   },
   "include": ["src/**/*"]
 }
