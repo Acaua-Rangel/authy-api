@@ -8,5 +8,6 @@ import authy_controller from '../controllers/authy_controller.js';
 authyRouter
     .post('/login', authy_controller.login)
     .post('/register', authy_controller.register)
+    .post('/getToken', authy_controller.getToken)
 
 export default authyRouter; 

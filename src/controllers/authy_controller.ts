@@ -69,5 +69,22 @@ export default {
         
         return res.status(200).json({sucess: true, token});
 
+    },
+
+    getToken: async(req: any, res: any) => {
+        const { key } = req.headers
+
+        if (typeof key !== "string") {
+            return res.status(400).json({sucess: false, message: "Unauthorized"});
+        } 
+
+        const keyHashed = sec.secHash(key);
+        console.log(keyHashed);
+
+        const user = await User.getUserByRegenerateToken(keyHashed);
+
+        const acessToken = await user.getToken();
+
+        return res.status(200).json({sucess: true, acessToken});
     }
 }

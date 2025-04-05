@@ -40,6 +40,12 @@ export default class Security {
     
         return `${salt}:${hash}`;
     }
+
+    secHash(key: string): string {
+        const hash = crypto.createHmac("sha256", process.env.SECRET_KEY).update(key).digest("hex");
+    
+        return hash;
+    }
     
     // Verificação de senha com base em hash com sal
     verifyPassword(password: string, storedHash: string): boolean {

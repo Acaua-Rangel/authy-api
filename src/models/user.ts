@@ -82,12 +82,52 @@ export default class User {
     }
 
     async getRegenerateToken(): Promise<QueryError|string> {
-        const token: string = crypto.randomBytes(512).toString("hex"); // 512 bytes (1024 caracteres hex)
+        const token: string = crypto.randomBytes(32).toString("hex"); // 512 bytes (1024 caracteres hex)
+        const tokenHashed = sec.secHash(token);
         //return token;
         return new Promise((resolve, reject) => {
             connection.query(
                 "INSERT INTO devices (userId, token) VALUES (?, ?)", 
-                [this.id, token], 
+                [this.id, tokenHashed], 
+                (err: QueryError, results: any) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(token);
+                    }
+                }
+            );
+        });
+    }
+
+    static async getDataByRegenerateToken(key: string): Promise<RowDataPacket[]> {
+        return new Promise(async(resolve, reject) => {
+            connection.query("select users.id, users.login, users.salt, users.password from users inner join devices on users.id = devices.userId and devices.token = ? limit 1", [key], async(err: QueryError, rows: RowDataPacket[], fields) => {
+                if (err) {
+                    if ("code" in err && err.code === "ER_DUP_ENTRY") {
+                      return reject(err);
+                    }
+                    return reject(err); // Rejeita qualquer outro erro também
+                }
+                resolve(rows);
+                return;
+            })
+        })
+    }
+
+    static async getUserByRegenerateToken(key: string): Promise<User> {
+        const response = await User.getDataByRegenerateToken(key);
+        return new User(response[0].id, sec.decrypt(response[0].login), response[0].password, response[0].salt);
+    }
+
+    async getToken(): Promise<QueryError|string> {
+        const token: string = crypto.randomBytes(16).toString("hex"); // 512 bytes (1024 caracteres hex)
+        const tokenHashed = sec.secHash(token)
+        //return token;
+        return new Promise((resolve, reject) => {
+            connection.query(
+                "INSERT INTO acess (userId, token) VALUES (?, ?)", 
+                [this.id, tokenHashed], 
                 (err: QueryError, results: any) => {
                     if (err) {
                         reject(err);
