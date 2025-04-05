@@ -6,6 +6,7 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 import http from 'http';
 import authyRouter from './routes/authy.js';
+import { authyMiddleware, AuthRequest } from './models/authyMiddleware.js';
 
 const app = express();
 dotenv.config({path:'.env'});
@@ -30,6 +31,10 @@ async function status (req: any, res: any)  {
 app.use(cors(corsOptions));
 
 app.use('/authy', authyRouter);
+
+app.get('/protegido', authyMiddleware, (req: AuthRequest, res) => {
+    res.json({ message: 'Você está autenticado!', user: req.user });
+});
 
 app.use('/status', status);
 

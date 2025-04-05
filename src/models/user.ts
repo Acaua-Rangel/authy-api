@@ -2,6 +2,7 @@ import Security from "./cryptograf.js";
 import connection from '../config/dbConn.js';
 import * as crypto from 'crypto';
 import { QueryError, RowDataPacket } from "mysql2";
+import { generateToken } from "./jwt.js";
 
 const sec = new Security();
 
@@ -117,26 +118,15 @@ export default class User {
 
     static async getUserByRegenerateToken(key: string): Promise<User> {
         const response = await User.getDataByRegenerateToken(key);
-        return new User(response[0].id, sec.decrypt(response[0].login), response[0].password, response[0].salt);
+        if (response[0]) {
+            return new User(response[0].id, sec.decrypt(response[0].login), response[0].password, response[0].salt);
+        }
+        return new User(-1, "", "", "");
     }
 
-    async getToken(): Promise<QueryError|string> {
-        const token: string = crypto.randomBytes(16).toString("hex"); // 512 bytes (1024 caracteres hex)
-        const tokenHashed = sec.secHash(token)
-        //return token;
-        return new Promise((resolve, reject) => {
-            connection.query(
-                "INSERT INTO acess (userId, token) VALUES (?, ?)", 
-                [this.id, tokenHashed], 
-                (err: QueryError, results: any) => {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        resolve(token);
-                    }
-                }
-            );
-        });
+    getToken(): string {
+        const token = generateToken({ userId: this.id });
+        return token;
     }
     
 }

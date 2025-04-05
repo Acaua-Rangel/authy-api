@@ -79,11 +79,14 @@ export default {
         } 
 
         const keyHashed = sec.secHash(key);
-        console.log(keyHashed);
 
         const user = await User.getUserByRegenerateToken(keyHashed);
 
-        const acessToken = await user.getToken();
+        if (user.id === -1) {
+            return res.status(403).json({sucess: false, message: "Unauthorized"});
+        }
+
+        const acessToken = user.getToken();
 
         return res.status(200).json({sucess: true, acessToken});
     }
