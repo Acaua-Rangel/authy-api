@@ -11,3 +11,5 @@ authyRouter
     .post('/getToken', authy_controller.getToken)
 
 export default authyRouter; 
+
+//localhost:3000/authy/login
